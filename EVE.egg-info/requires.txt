@@ -1,0 +1,11 @@
+matplotlib
+numpy
+pandas
+rich
+scikit-learn
+scipy
+seaborn
+torch
+torchaudio
+torchvision
+tqdm

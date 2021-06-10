@@ -54,7 +54,17 @@ def train_EVE(
     model_name = protein_name + "_" + model_name_suffix
     print("Model name: " + str(model_name))
 
-    model_params = json.load(open(model_parameters_location))
+    if os.path.exists(model_parameters_location):
+        model_params = json.load(open(model_parameters_location))
+    else:
+        print("Using default model parameters")
+        model_params = json.load(
+            open(
+                os.path.join(
+                    os.path.dirname(__file__), "model", "default_model_params.json"
+                )
+            )
+        )
 
     model = VAE_model.VAE_model(
         model_name=model_name,
