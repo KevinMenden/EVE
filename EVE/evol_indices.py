@@ -15,13 +15,11 @@ def compute_evol_indices(
     MSA_weights_location,
     theta_reweighting,
     VAE_checkpoint_location,
-    model_name_suffix,
     model_parameters_location,
     computation_mode,
     all_singles_mutations_folder,
     mutations_location,
     output_evol_indices_location,
-    output_evol_indices_filename_suffix,
     num_samples_compute_evol_indices,
     batch_size,
     device,
@@ -67,7 +65,7 @@ def compute_evol_indices(
             all_singles_mutations_folder + os.sep + protein_name + "_all_singles.csv"
         )
 
-    model_name = protein_name + "_" + model_name_suffix
+    model_name = protein_name
     print("Model name: " + str(model_name))
 
     if os.path.exists(model_parameters_location):
@@ -115,14 +113,7 @@ def compute_evol_indices(
     df = pd.DataFrame(df)
 
     evol_indices_output_filename = (
-        output_evol_indices_location
-        + os.sep
-        + protein_name
-        + "_"
-        + str(num_samples_compute_evol_indices)
-        + "_samples"
-        + output_evol_indices_filename_suffix
-        + ".csv"
+        output_evol_indices_location + os.sep + protein_name + ".csv"
     )
     try:
         keep_header = os.stat(evol_indices_output_filename).st_size == 0

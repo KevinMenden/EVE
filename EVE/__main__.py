@@ -78,12 +78,6 @@ Train EVE model
     help="Parameters for MSA sequence re-weighting",
 )
 @click.option(
-    "--model_name_suffix",
-    default="protein_model",
-    type=str,
-    help="model checkpoint name will be the protein name followed by this suffix",
-)
-@click.option(
     "--model_parameters_location",
     "-p",
     type=str,
@@ -102,7 +96,6 @@ def train(
     msa_list,
     protein_index,
     theta_reweighting,
-    model_name_suffix,
     model_parameters_location,
     device,
 ):
@@ -123,7 +116,6 @@ def train(
         MSA_weights_location=MSA_weights_location,
         theta_reweighting=theta_reweighting,
         VAE_checkpoint_location=VAE_checkpoint_location,
-        model_name_suffix=model_name_suffix,
         model_parameters_location=model_parameters_location,
         training_logs_location=training_logs_location,
         device=device,
@@ -163,12 +155,6 @@ Compute evolutionary indices
     help="Parameters for MSA sequence re-weighting",
 )
 @click.option(
-    "--model_name_suffix",
-    default="protein_model",
-    type=str,
-    help="model checkpoint name will be the protein name followed by this suffix",
-)
-@click.option(
     "--model_parameters_location",
     "-p",
     type=str,
@@ -180,12 +166,6 @@ Compute evolutionary indices
     type=str,
     default="all_singles",
     help="Computes evol indices for all single AA mutations or for a passed in list of mutations (singles or multiples) [all_singles,input_mutations_list]",
-)
-@click.option(
-    "--output_evol_indices_filename_suffix",
-    default="evol_indices_out",
-    type=str,
-    help="(Optional) Suffix to be added to output filename",
 )
 @click.option(
     "--num_samples_compute_evol_indices",
@@ -212,10 +192,8 @@ def evol_indices(
     msa_list,
     protein_index,
     theta_reweighting,
-    model_name_suffix,
     model_parameters_location,
     computation_mode,
-    output_evol_indices_filename_suffix,
     num_samples_compute_evol_indices,
     batch_size,
     device,
@@ -238,13 +216,11 @@ def evol_indices(
         MSA_weights_location=MSA_weights_location,
         theta_reweighting=theta_reweighting,
         VAE_checkpoint_location=VAE_checkpoint_location,
-        model_name_suffix=model_name_suffix,
         model_parameters_location=model_parameters_location,
         computation_mode=computation_mode,
         all_singles_mutations_folder=all_singles_mutations_folder,
         mutations_location=all_singles_mutations_folder,
         output_evol_indices_location=output_evol_indices_location,
-        output_evol_indices_filename_suffix=output_evol_indices_filename_suffix,
         num_samples_compute_evol_indices=num_samples_compute_evol_indices,
         batch_size=batch_size,
         device=device,
@@ -257,47 +233,17 @@ Train GMM and compute EVE scores
 
 
 @cli.command()
+@click.option("--out", type=str, default="eve_output", help="Output directory")
 @click.option(
-    "--input_evol_indices_location",
+    "--msa_list",
+    "-l",
     type=str,
-    help="Folder where all individual files with evolutionary indices are stored",
-)
-@click.option(
-    "--input_evol_indices_filename_suffix",
-    type=str,
-    default="",
-    help="Suffix that was added when generating the evol indices files",
-)
-@click.option(
-    "--protein_list", type=str, help="List of proteins to be included (one per row)"
-)
-@click.option(
-    "--output_eve_scores_location",
-    type=str,
-    help="Folder where all EVE scores are stored",
-)
-@click.option(
-    "--output_eve_scores_filename_suffix",
-    default="",
-    type=str,
-    help="(Optional) Suffix to be added to output filename",
+    help="List of proteins and corresponding MSA file name",
 )
 @click.option(
     "--load_GMM_models",
     default=False,
     help="If True, load GMM model parameters. If False, train GMMs from evol indices files",
-)
-@click.option(
-    "--GMM_parameter_location",
-    default=None,
-    type=str,
-    help="Folder where GMM objects are stored if loading / to be stored if we are re-training",
-)
-@click.option(
-    "--GMM_parameter_filename_suffix",
-    default=None,
-    type=str,
-    help="Suffix of GMMs model files to load",
 )
 @click.option(
     "--protein_GMM_weight",
@@ -306,7 +252,7 @@ Train GMM and compute EVE scores
     help="Value of global-local GMM mixing parameter",
 )
 @click.option(
-    "--compute_EVE_scores",
+    "--compute_EVE_scores_mutations",
     default=False,
     help="Computes EVE scores and uncertainty metrics for all input protein mutations",
 )
@@ -316,8 +262,9 @@ Train GMM and compute EVE scores
     help="Recompute uncertainty thresholds based on all evol indices in file. Otherwise loads default threhold.",
 )
 @click.option(
-    "--default_uncertainty_threshold_file_location",
-    default="./utils/default_uncertainty_threshold.json",
+    "--default_uncertainty_threshold",
+    "-u",
+    default="default_uncertainty_threshold.json",
     type=str,
     help="Location of default uncertainty threholds.",
 )
@@ -337,46 +284,42 @@ Train GMM and compute EVE scores
     type=str,
     help="File with ground truth labels for all proteins of interest (e.g., ClinVar)",
 )
-@click.option(
-    "--plot_location", default=None, type=str, help="Location of the different plots"
-)
 @click.option("--verbose", default=True, help="Print detailed information during run")
 def score(
-    input_evol_indices_location,
-    input_evol_indices_filename_suffix,
-    protein_list,
-    output_eve_scores_location,
-    output_eve_scores_filename_suffix,
-    load_GMM_models,
-    GMM_parameter_location,
-    GMM_parameter_filename_suffix,
-    protein_GMM_weight,
-    compute_EVE_scores,
+    out,
+    msa_list,
+    load_gmm_models,
+    protein_gmm_weight,
+    compute_eve_scores_mutations,
     recompute_uncertainty_threshold,
-    default_uncertainty_threshold_file_location,
+    default_uncertainty_threshold,
     plot_histograms,
     plot_scores_vs_labels,
     labels_file_location,
-    plot_location,
     verbose,
 ):
     """ Train GMM and compute EVE scores"""
+
+    # Generate paths to output folders and make new folders if necessary
+    input_evol_indices_location = os.path.join(out, "evol_indices")
+    output_eve_scores_location = os.path.join(out, "eve_scores")
+    GMM_parameter_location = os.path.join(out, "gmm_parameters")
+    plot_location = os.path.join(out, "plots")
+    os.makedirs(output_eve_scores_location, exist_ok=True)
+
     compute_eve_scores(
-        input_evol_indices_location,
-        input_evol_indices_filename_suffix,
-        protein_list,
-        output_eve_scores_location,
-        output_eve_scores_filename_suffix,
-        load_GMM_models,
-        GMM_parameter_location,
-        GMM_parameter_filename_suffix,
-        protein_GMM_weight,
-        compute_EVE_scores,
-        recompute_uncertainty_threshold,
-        default_uncertainty_threshold_file_location,
-        plot_histograms,
-        plot_scores_vs_labels,
-        labels_file_location,
-        plot_location,
-        verbose,
+        input_evol_indices_location=input_evol_indices_location,
+        protein_list=msa_list,
+        output_eve_scores_location=output_eve_scores_location,
+        load_GMM_models=load_gmm_models,
+        GMM_parameter_location=GMM_parameter_location,
+        protein_GMM_weight=protein_gmm_weight,
+        compute_EVE_scores=compute_eve_scores_mutations,
+        recompute_uncertainty_threshold=recompute_uncertainty_threshold,
+        default_uncertainty_threshold=default_uncertainty_threshold,
+        plot_histograms=plot_histograms,
+        plot_scores_vs_labels=plot_scores_vs_labels,
+        labels_file_location=labels_file_location,
+        plot_location=plot_location,
+        verbose=verbose,
     )

@@ -11,17 +11,14 @@ from EVE.utils import performance_helpers as ph, plot_helpers
 
 def compute_eve_scores(
     input_evol_indices_location,
-    input_evol_indices_filename_suffix,
     protein_list,
     output_eve_scores_location,
-    output_eve_scores_filename_suffix,
     load_GMM_models,
     GMM_parameter_location,
-    GMM_parameter_filename_suffix,
     protein_GMM_weight,
     compute_EVE_scores,
     recompute_uncertainty_threshold,
-    default_uncertainty_threshold_file_location,
+    default_uncertainty_threshold,
     plot_histograms,
     plot_scores_vs_labels,
     labels_file_location,
@@ -35,21 +32,11 @@ def compute_eve_scores(
     all_evol_indices = pd.concat(
         [
             pd.read_csv(
-                input_evol_indices_location
-                + os.sep
-                + protein
-                + input_evol_indices_filename_suffix
-                + ".csv",
+                input_evol_indices_location + os.sep + protein + ".csv",
                 low_memory=False,
             )[list_variables_to_keep]
             for protein in protein_list
-            if os.path.exists(
-                input_evol_indices_location
-                + os.sep
-                + protein
-                + input_evol_indices_filename_suffix
-                + ".csv"
-            )
+            if os.path.exists(input_evol_indices_location + os.sep + protein + ".csv")
         ],
         ignore_index=True,
     )
@@ -66,11 +53,7 @@ def compute_eve_scores(
     if load_GMM_models:
         dict_models = pickle.load(
             open(
-                GMM_parameter_location
-                + os.sep
-                + "GMM_model_dictionary_"
-                + GMM_parameter_filename_suffix,
-                "rb",
+                GMM_parameter_location + os.sep + "GMM_model_dictionary_" "rb",
             )
         )
         dict_pathogenic_cluster_index = pickle.load(
@@ -78,27 +61,16 @@ def compute_eve_scores(
                 GMM_parameter_location
                 + os.sep
                 + "GMM_pathogenic_cluster_index_dictionary_"
-                + GMM_parameter_filename_suffix,
                 "rb",
             )
         )
     else:
         dict_models = {}
         dict_pathogenic_cluster_index = {}
-        if not os.path.exists(
-            GMM_parameter_location + os.sep + output_eve_scores_filename_suffix
-        ):
-            os.makedirs(
-                GMM_parameter_location + os.sep + output_eve_scores_filename_suffix
-            )
+        if not os.path.exists(GMM_parameter_location + os.sep):
+            os.makedirs(GMM_parameter_location + os.sep)
         GMM_stats_log_location = (
-            GMM_parameter_location
-            + os.sep
-            + output_eve_scores_filename_suffix
-            + os.sep
-            + "GMM_stats_"
-            + output_eve_scores_filename_suffix
-            + ".csv"
+            GMM_parameter_location + os.sep + os.sep + "GMM_stats_" + ".csv"
         )
         with open(GMM_stats_log_location, "a") as logs:
             logs.write(
@@ -219,13 +191,7 @@ def compute_eve_scores(
         pickle.dump(
             dict_models,
             open(
-                GMM_parameter_location
-                + os.sep
-                + output_eve_scores_filename_suffix
-                + os.sep
-                + "GMM_model_dictionary_"
-                + output_eve_scores_filename_suffix,
-                "wb",
+                GMM_parameter_location + os.sep + os.sep + "GMM_model_dictionary_" "wb",
             ),
         )
         pickle.dump(
@@ -233,41 +199,21 @@ def compute_eve_scores(
             open(
                 GMM_parameter_location
                 + os.sep
-                + output_eve_scores_filename_suffix
                 + os.sep
                 + "GMM_pathogenic_cluster_index_dictionary_"
-                + output_eve_scores_filename_suffix,
                 "wb",
             ),
         )
 
     if plot_histograms:
-        if not os.path.exists(
-            plot_location
-            + os.sep
-            + "plots_histograms"
-            + os.sep
-            + output_eve_scores_filename_suffix
-        ):
-            os.makedirs(
-                plot_location
-                + os.sep
-                + "plots_histograms"
-                + os.sep
-                + output_eve_scores_filename_suffix
-            )
+        if not os.path.exists(plot_location + os.sep + "plots_histograms" + os.sep):
+            os.makedirs(plot_location + os.sep + "plots_histograms" + os.sep)
         plot_helpers.plot_histograms(
             all_evol_indices,
             dict_models,
             dict_pathogenic_cluster_index,
             protein_GMM_weight,
-            plot_location
-            + os.sep
-            + "plots_histograms"
-            + os.sep
-            + output_eve_scores_filename_suffix,
-            output_eve_scores_filename_suffix,
-            protein_list,
+            plot_location + os.sep + "plots_histograms" + os.sep + protein_list,
         )
 
     if compute_EVE_scores:
@@ -398,11 +344,7 @@ def compute_eve_scores(
                 print(all_scores[classification_name].value_counts(normalize=True))
 
         all_scores.to_csv(
-            output_eve_scores_location
-            + os.sep
-            + "all_EVE_scores_"
-            + output_eve_scores_filename_suffix
-            + ".csv",
+            output_eve_scores_location + os.sep + "all_EVE_scores_" + ".csv",
             index=False,
         )
 
@@ -418,30 +360,17 @@ def compute_eve_scores(
             all_scores_mutations_with_labels.ClinVar_labels != 0.5
         ].copy()
         if not os.path.exists(
-            plot_location
-            + os.sep
-            + "plots_scores_vs_labels"
-            + os.sep
-            + output_eve_scores_filename_suffix
+            plot_location + os.sep + "plots_scores_vs_labels" + os.sep
         ):
-            os.makedirs(
-                plot_location
-                + os.sep
-                + "plots_scores_vs_labels"
-                + os.sep
-                + output_eve_scores_filename_suffix
-            )
+            os.makedirs(plot_location + os.sep + "plots_scores_vs_labels" + os.sep)
         for protein in tqdm.tqdm(protein_list, "Plot scores Vs labels"):
             plot_helpers.plot_scores_vs_labels(
                 score_df=all_PB_scores[all_PB_scores.protein_name == protein],
                 plot_location=plot_location
                 + os.sep
                 + "plots_scores_vs_labels"
-                + os.sep
-                + output_eve_scores_filename_suffix,
-                output_eve_scores_filename_suffix=output_eve_scores_filename_suffix
-                + "_"
-                + protein,
+                + os.sep,
+                output_eve_scores_filename_suffix="" + "_" + protein,
                 mutation_name="mutations",
                 score_name="EVE_scores",
                 label_name="ClinVar_labels",

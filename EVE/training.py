@@ -17,7 +17,6 @@ def train_EVE(
     MSA_weights_location,
     theta_reweighting,
     VAE_checkpoint_location,
-    model_name_suffix,
     model_parameters_location,
     training_logs_location,
     device="cuda",
@@ -52,7 +51,7 @@ def train_EVE(
         + ".npy",
     )
 
-    model_name = protein_name + "_" + model_name_suffix
+    model_name = protein_name
     print("Model name: " + str(model_name))
 
     if os.path.exists(model_parameters_location):
