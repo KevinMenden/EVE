@@ -24,6 +24,7 @@ def compute_evol_indices(
     output_evol_indices_filename_suffix,
     num_samples_compute_evol_indices,
     batch_size,
+    device,
 ):
 
     mapping_file = pd.read_csv(MSA_list)
@@ -87,6 +88,7 @@ def compute_evol_indices(
         encoder_parameters=model_params["encoder_parameters"],
         decoder_parameters=model_params["decoder_parameters"],
         random_seed=42,
+        device=device,
     )
     model = model.to(model.device)
 

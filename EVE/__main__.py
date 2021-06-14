@@ -182,11 +182,6 @@ Compute evolutionary indices
     help="Computes evol indices for all single AA mutations or for a passed in list of mutations (singles or multiples) [all_singles,input_mutations_list]",
 )
 @click.option(
-    "--all_singles_mutations_folder",
-    type=str,
-    help="Location for the list of generated single AA mutations",
-)
-@click.option(
     "--output_evol_indices_filename_suffix",
     default="evol_indices_out",
     type=str,
@@ -194,6 +189,7 @@ Compute evolutionary indices
 )
 @click.option(
     "--num_samples_compute_evol_indices",
+    "-n",
     type=int,
     default=2000,
     help="Num of samples to approximate delta elbo when computing evol indices",
@@ -203,6 +199,12 @@ Compute evolutionary indices
     default=2048,
     type=int,
     help="Batch size when computing evol indices",
+)
+@click.option(
+    "--device",
+    type=str,
+    default="cuda",
+    help="Select device for training (cuda | cpu)",
 )
 def evol_indices(
     out,
@@ -216,6 +218,7 @@ def evol_indices(
     output_evol_indices_filename_suffix,
     num_samples_compute_evol_indices,
     batch_size,
+    device,
 ):
     """ Compute evolutionary indices """
 
@@ -224,6 +227,9 @@ def evol_indices(
     VAE_checkpoint_location = os.path.join(out, "model")
     all_singles_mutations_folder = os.path.join(out, "mutations")
     output_evol_indices_location = os.path.join(out, "evol_indices")
+
+    os.makedirs(all_singles_mutations_folder, exist_ok=True)
+    os.makedirs(output_evol_indices_location, exist_ok=True)
 
     compute_evol_indices(
         MSA_data_folder=msa_data_folder,
@@ -241,6 +247,7 @@ def evol_indices(
         output_evol_indices_filename_suffix=output_evol_indices_filename_suffix,
         num_samples_compute_evol_indices=num_samples_compute_evol_indices,
         batch_size=batch_size,
+        device=device,
     )
 
 
