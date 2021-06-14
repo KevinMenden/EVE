@@ -20,6 +20,7 @@ def train_EVE(
     model_name_suffix,
     model_parameters_location,
     training_logs_location,
+    device="cuda",
 ):
 
     mapping_file = pd.read_csv(MSA_list)
@@ -72,6 +73,7 @@ def train_EVE(
         encoder_parameters=model_params["encoder_parameters"],
         decoder_parameters=model_params["decoder_parameters"],
         random_seed=42,
+        device=device,
     )
     model = model.to(model.device)
 

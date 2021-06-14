@@ -85,9 +85,16 @@ Train EVE model
 )
 @click.option(
     "--model_parameters_location",
+    "-p",
     type=str,
     default="default_model_params.json",
     help="Location of VAE model parameters",
+)
+@click.option(
+    "--device",
+    type=str,
+    default="cuda",
+    help="Select device for training (cuda | cpu)",
 )
 def train(
     out,
@@ -97,6 +104,7 @@ def train(
     theta_reweighting,
     model_name_suffix,
     model_parameters_location,
+    device,
 ):
     """ Train EVE VAE """
     # Generate the output folders if they don't exist already
@@ -118,6 +126,7 @@ def train(
         model_name_suffix=model_name_suffix,
         model_parameters_location=model_parameters_location,
         training_logs_location=training_logs_location,
+        device=device,
     )
 
 
@@ -161,6 +170,7 @@ Compute evolutionary indices
 )
 @click.option(
     "--model_parameters_location",
+    "-p",
     type=str,
     default="default_model_params.json",
     help="Location of VAE model parameters",
