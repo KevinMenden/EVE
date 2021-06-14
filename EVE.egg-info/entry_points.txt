@@ -1,3 +1,0 @@
-[console_scripts]
-eve = EVE.__main__:main
-

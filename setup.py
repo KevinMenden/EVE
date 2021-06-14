@@ -23,9 +23,7 @@ setup(
     include_package_data=True,
     python_requires=">3.7.0",
     install_requires=[
-        "torch",
-        "torchvision",
-        "torchaudio",
+        "torch==1.7",
         "scikit-learn",
         "numpy",
         "pandas",
@@ -34,5 +32,6 @@ setup(
         "rich",
         "tqdm",
         "seaborn",
+        "click",
     ],
 )
