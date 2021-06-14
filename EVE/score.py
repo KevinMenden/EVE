@@ -69,9 +69,7 @@ def compute_eve_scores(
         dict_pathogenic_cluster_index = {}
         if not os.path.exists(GMM_parameter_location + os.sep):
             os.makedirs(GMM_parameter_location + os.sep)
-        GMM_stats_log_location = (
-            GMM_parameter_location + os.sep + os.sep + "GMM_stats_" + ".csv"
-        )
+        GMM_stats_log_location = GMM_parameter_location + os.sep + "GMM_stats_" + ".csv"
         with open(GMM_stats_log_location, "a") as logs:
             logs.write(
                 "protein_name,weight_pathogenic,mean_pathogenic,mean_benign,std_dev_pathogenic,std_dev_benign\n"
@@ -191,7 +189,8 @@ def compute_eve_scores(
         pickle.dump(
             dict_models,
             open(
-                GMM_parameter_location + os.sep + os.sep + "GMM_model_dictionary_" "wb",
+                GMM_parameter_location + os.sep + "GMM_model_dictionary",
+                "wb",
             ),
         )
         pickle.dump(
@@ -199,8 +198,7 @@ def compute_eve_scores(
             open(
                 GMM_parameter_location
                 + os.sep
-                + os.sep
-                + "GMM_pathogenic_cluster_index_dictionary_"
+                + "GMM_pathogenic_cluster_index_dictionary_",
                 "wb",
             ),
         )
