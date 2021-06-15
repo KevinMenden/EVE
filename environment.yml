@@ -2,6 +2,7 @@ name: protein_env
 channels:
   - pytorch
   - anaconda
+  - bioconda
   - defaults
 dependencies:
   - python=3.7
@@ -14,3 +15,4 @@ dependencies:
   - tqdm
   - matplotlib
   - seaborn
+  - hmmer2

@@ -1,50 +1,101 @@
-# Evolutionary model of Variant Effects (EVE)
+# Variant effect prediction with EVE
 
-This is the official code repository for the paper "Large-scale clinical interpretation of genetic variants using evolutionary data and deep learning" (https://www.biorxiv.org/content/10.1101/2020.12.21.423785v1). This project is a joint collaboration between the Marks lab (https://www.deboramarkslab.com/) and the OATML group (https://oatml.cs.ox.ac.uk/).
+This repository was forked and adapted from: https://github.com/OATML/EVE
 
-## Overview
-EVE is a set of protein-specific models providing for any single amino acid mutation of interest a score reflecting the propensity of the resulting protein to be pathogenic. For each protein family, a Bayesian VAE learns a distribution over amino acid sequences from evolutionary data. It enables the computation of an evolutionary index for each mutant, which approximates the log-likelihood ratio of the mutant vs the wild type. A global-local mixture of Gaussian Mixture Models separates variants into benign and pathogenic clusters based on that index. The EVE scores reflect probabilistic assignments to the pathogenic cluster.
+The code was adapted to make the algorithm easier usable in a pipeline setting.
 
 ## Usage
-The end to end process to compute EVE scores consists of three consecutive steps:
-1. Train the Bayesian VAE on a re-weighted multiple sequence alignment (MSA) for the protein of interest => train_VAE.py
-2. Compute the evolutionary indices for all single amino acid mutations => compute_evol_indices.py
-3. Train a GMM to cluster variants on the basis of the evol indices then output scores and uncertainties on the class assignments => train_GMM_and_compute_EVE_scores.py
-We also provide all EVE scores for all single amino acid mutations for thousands of proteins at the following address: http://evemodel.org/.
 
-## Example scripts
-The "examples" folder contains sample bash scripts to obtain EVE scores for the PTEN protein.
-The corresponding MSA and ClinVar labels are provided in the data folder.
+To generate variant effect predictions, the following data is required:
 
-## Data requirements
-The only data required to train EVE models and obtain EVE scores from scratch are the multiple sequence alignments (MSAs) for the corresponding proteins (see data/MSA for an example MSA for PTEN). The code provides basic functionalities to pre-process MSAs for modelling. By default, sequences with 50% or more gaps in the alignment and/or positions with less than 70% residue occupancy will be removed. These parameters may be adjusted as needed by the end user (see utils/data_utils.py for more details).
-The script "train_GMM_and_compute_EVE_scores.py" provides functionalities to compare EVE scores with reference labels (e.g., ClinVar) -- these labels are to be provided by the user (using a format similar to the example provided under data/labels).
+* A copy of the [Uniref100 protein database](https://www.uniprot.org/uniref/?query=&fil=identity:1.0) 
+* the sequence of your query protein (in Fasta format)
 
-## Software requirements
-The entire codebase is written in python. Package requirements are as follows:
-  - python=3.7
-  - pytorch=1.7
-  - cudatoolkit=11.0
-  - scikit-learn=0.24.1
-  - numpy=1.20.1
-  - pandas=1.2.4
-  - scipy=1.6.2
-  - tqdm
-  - matplotlib
-  - seaborn
+The procedure then consists of the following steps:
 
-The corresponding environment may be created via conda and the provided protein_env.yml file as follows:
-```
-  conda env create -f protein_env.yml
-  conda activate protein_env
-```
+* Generate multiple sequence alignment (MSA) with [jackhmmer](http://hmmer.org/) using your query protein and the Uniref100 DB
+* Train an EVE model on the MSA
+* Compute evolutionary indices for all possible mutations using the trained EVE model
+* Train a GMM and score evolutionary indices to classify mutations into three categories (pathogenic, benign, uncertain)
+
+## Generate MSA with jackhmmer
+
+### jackhmmer
+
+First we have to generate the MSA using jackhmmer according to the method specified in the paper:
+
+* bitscore (`--incT`) of 0.3 * length_of_sequence
+* 5 iterations (`-N 5`)
+
+Example for protein of length 819, which gives a bitscore of 245.7.
+
+`jackhmer --cpu 8 -A protein_msa.sth --incT 245.7 -N 5 protein.fasta uniref100.fasta`
+
+### MSA Format
+
+This command generates a MSA in Stockholm format (`.sth`), however we need the A2M format (`.a2m`). So we need to convert the format using `esl-reformat` which is included in the HMMER suite of tools:
+
+`esl-reformat a2m protein_msa.sth > protein_msa.a2m`
+
+Finally, we need to reformat the name of our query sequence in the MSA to be compatible with the EVE pre-processing functions. Specifically, we need a header that is modified like so:
+
+`>PROTEIN_NAME/start-end`
+
+So in our example:
+
+`>PROTEIN/1-819`
+
+The query protein should be the first entry in the MSA, so this line should be the first one in the file.
+
+### Further comments
+
+In the EVE publication, the authors furthermore make sure the the MSA adheres to the following quality standards:
+
+... TO BE FILLED OUT ...
+
+## Run EVE
+
+### Train EVE model
+
+The first step is to train an EVE model.
+
+As input, you currently need three files:
+
+* your MSA
+* a file pointing to your MSA (`example_mapping.csv`)
+* a file with the model parameters (`default_model_parameters.json`)
+
+Examples of the latter two files can be found in the assets folder. If you have those files, you can run the model:
+
+`eve train -l example_mapping.csv -p default_model_params.json`
+
+By default, this will use the GPU for training. You can have a look at other parameters using `eve train --help`
+
+### Compute Evolutionary Indices
+
+Next, we need to compute the evolutionary indices:
+
+`eve evol-indices -l example_mapping.csv`
+
+### Train GMM and score mutations
+
+To score mutations using a GMM, use the following command:
+
+`eve score -l example_mapping.csv`
+
+### Notes
+
+This workflow is not entirely ideal but we might put this into a Nextflow pipeline anyway so it might not be worth it to update.
 
 ## License
+
 This project is available under the MIT license.
 
 ## Reference
+
 If you use this code, please cite the following paper:
-```
+
+```bash
 Large-scale clinical interpretation of genetic variants using evolutionary data and deep learning
 Jonathan Frazer, Pascal Notin, Mafalda Dias, Aidan Gomez, Kelly Brock, Yarin Gal, Debora S. Marks
 bioRxiv 2020.12.21.423785

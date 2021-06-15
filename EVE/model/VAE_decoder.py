@@ -6,7 +6,7 @@ class VAE_Bayesian_MLP_decoder(nn.Module):
     """
     Bayesian MLP decoder class for the VAE model.
     """
-    def __init__(self, params):
+    def __init__(self, params, device):
         """
         Required input parameters:
         - seq_len: (Int) Sequence length of sequence alignment
@@ -24,7 +24,7 @@ class VAE_Bayesian_MLP_decoder(nn.Module):
         - bayesian_decoder: (Bool) Whether the decoder is bayesian or not
         """
         super().__init__()
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device
         self.seq_len = params['seq_len']
         self.alphabet_size = params['alphabet_size']
         self.hidden_layers_sizes = params['hidden_layers_sizes']
