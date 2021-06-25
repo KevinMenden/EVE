@@ -24,12 +24,12 @@ The procedure then consists of the following steps:
 
 First we have to generate the MSA using jackhmmer according to the method specified in the paper:
 
-* bitscore (`--incT`) of 0.3 * length_of_sequence
+* bitscore (`--incT` and `--incdomT`) of 0.3 * length_of_sequence (set both parameters to the threshold)
 * 5 iterations (`-N 5`)
 
-Example for protein of length 819, which gives a bitscore of 245.7.
+Example for protein of length 819, which gives a bitscore of 246 (round and use integers).
 
-`jackhmer --cpu 8 -A protein_msa.sth --incT 245.7 -N 5 protein.fasta uniref100.fasta`
+`jackhmer --cpu 8 -A protein_msa.sth --incT 246 -N 5 protein.fasta uniref100.fasta`
 
 ### MSA Format
 
