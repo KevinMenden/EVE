@@ -15,4 +15,4 @@ dependencies:
   - tqdm
   - matplotlib
   - seaborn
-  - hmmer2
+  - hmmer
