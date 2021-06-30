@@ -16,3 +16,5 @@ dependencies:
   - matplotlib
   - seaborn
   - hmmer
+  - pip:
+      - evcouplings
