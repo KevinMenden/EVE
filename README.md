@@ -18,19 +18,32 @@ The procedure then consists of the following steps:
 * Compute evolutionary indices for all possible mutations using the trained EVE model
 * Train a GMM and score evolutionary indices to classify mutations into three categories (pathogenic, benign, uncertain)
 
-## Generate MSA with jackhmmer
+## MSA generation with EVcouplings
 
-### jackhmmer
+The input MSA is generated with the `align` stage of the [EVcouplings](https://github.com/debbiemarkslab/EVcouplings) pipeline.
 
-First we have to generate the MSA using jackhmmer according to the method specified in the paper:
+The complete pipeline is configured via a config file, like this one: [example config](https://github.com/debbiemarkslab/EVcouplings/blob/develop/config/sample_config_monomer.txt)
 
-* bitscore (`--incT` and `--incdomT`) of 0.3 * length_of_sequence (set both parameters to the threshold)
-* 5 iterations (`-N 5`)
+To run EVcouplings, you simply have to the following command from withing the EVE docker image:
 
-Example for protein of length 819, which gives a bitscore of 246 (round and use integers).
+```bash
+evcouplings my_config.txt
+```
 
-`jackhmer --cpu 8 -A protein_msa.sth --incT 246 -N 5 protein.fasta uniref100.fasta`
+A config file to be used with this pipeline is provided here: TODO ADD THE EXAMPLE CONFIG FILE
+You simple have to change the uniref ID in the config file to specify the protein that should be used for alignment. The align pipeline will be run several times with different sequence threshold, to produce different MSAs with differing leniency.
 
+The best MSA then has to be selected according to the criteria of the EVE paper. With `L` as the length of the sequence and `N` being the number of sequences in the MSA, the MSA should fulfil the following criteria:
+
+* `Lcov >= 0.8L`
+* `100,000 >= N >= 10L`
+
+If these cannot be fulfilled, they can be relaxed to:
+
+* `Lcov >= 0.7L`
+* `200,000 >= N >= 10L`
+
+and so on. Using these criteria the best MSA is selected and used for EVE stage.
 ### MSA Format
 
 This command generates a MSA in Stockholm format (`.sth`), however we need the A2M format (`.a2m`). So we need to convert the format using `esl-reformat` which is included in the HMMER suite of tools:
@@ -101,3 +114,14 @@ Jonathan Frazer, Pascal Notin, Mafalda Dias, Aidan Gomez, Kelly Brock, Yarin Gal
 bioRxiv 2020.12.21.423785
 doi: https://doi.org/10.1101/2020.12.21.423785
 ```
+
+#### Archive
+
+First we have to generate the MSA using jackhmmer according to the method specified in the paper:
+
+* bitscore (`--incT` and `--incdomT`) of 0.3 * length_of_sequence (set both parameters to the threshold)
+* 5 iterations (`-N 5`)
+
+Example for protein of length 819, which gives a bitscore of 246 (round and use integers).
+
+`jackhmer --cpu 8 -A protein_msa.sth --incT 246 -N 5 protein.fasta uniref100.fasta`
